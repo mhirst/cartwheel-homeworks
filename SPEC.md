@@ -92,6 +92,18 @@ Successful results contain `ok: true` and the result fields. Expected failures c
 
 ## 5. Escalation policy
 
+### HW1 additional tool: delivery estimate
+
+`estimate_delivery_time(product_id)` is a public read tool available to all
+roles. It returns historical average calendar days from order placement to
+delivery for that product, rounded to one decimal, and `sample_count`.
+Delivered and subsequently refunded orders with valid, nonnegative durations
+contribute. No individual order or customer data is returned. An unknown
+product returns `not_found`; no usable history returns success with
+`average_days: null` and `sample_count: 0`. The agent must describe the result
+as a historical estimate, not a guaranteed arrival date, and must not invent
+an estimate when history is missing.
+
 The following cases always go to a human:
 
 - **ESC-1.** Refunds above the threshold; the tool queues the refund, and the agent explains the result.

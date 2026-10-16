@@ -29,6 +29,29 @@ MAX_SEARCH_LIMIT = 25
 DEFAULT_ORDER_LIMIT = 20
 
 
+def estimate_delivery_time(ctx: AuthContext, product_id: int) -> dict[str, Any]:
+    """Estimate order-to-delivery calendar days from a product's history.
+
+    Public for all roles; returns aggregates only, never individual orders.
+    No usable history is a success with average_days=None and sample_count=0.
+    Unknown products return not_found. This is not a guaranteed arrival date.
+    """
+    with db.connection() as conn:
+        product = next((p for p in db.list_products(conn) if p.id == product_id), None)
+        if product is None:
+            return {"ok": False, "error": "not_found", "reason": f"No product #{product_id}."}
+        history = db.product_delivery_history(conn, product_id)
+    average = history["average_days"]
+    return {
+        "ok": True,
+        "product_id": product_id,
+        "average_days": round(average, 1) if average is not None else None,
+        "sample_count": history["sample_count"],
+        "basis": "calendar days from order placement to delivery",
+        "note": "Historical estimate, not a guaranteed arrival date. No history means insufficient data.",
+    }
+
+
 def get_policy(ctx: AuthContext, policy_id: str) -> dict[str, Any]:
     """Fetch one policy doc by its exact id. Risk tier: read.
 

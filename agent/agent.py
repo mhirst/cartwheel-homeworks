@@ -432,11 +432,26 @@ def find_order(
     return _call(wrapper, hw_tools.find_order, query)
 
 
+@function_tool
+def estimate_delivery_time(
+    wrapper: RunContextWrapper[AuthContext], product_id: int
+) -> dict[str, Any]:
+    """Estimate a product's typical order-to-delivery calendar days from historical deliveries.
+
+    Use for expected delivery questions. Find the product ID with search_products
+    if needed. State the sample count and that this is a historical estimate,
+    not a guarantee or tracking prediction. If average_days is null, explain
+    that there is insufficient delivery history; do not invent an estimate.
+    """
+    return _call(wrapper, hw_tools.estimate_delivery_time, product_id)
+
+
 # Progressive disclosure: a session exposes only the tools its role can use.
 # Fewer tools mean fewer wrong choices and cleaner evals. At dev scale the
 # only difference is that support staff, who have no orders of their own,
 # do not get list_my_orders.
 _COMMON_TOOLS = [
+    estimate_delivery_time,
     search_help_center,
     get_policy,
     search_products,

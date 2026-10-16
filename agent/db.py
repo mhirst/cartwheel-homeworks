@@ -227,6 +227,23 @@ def list_products(
     ]
 
 
+def product_delivery_history(conn: sqlite3.Connection, product_id: int) -> dict[str, Any]:
+    """Public aggregate only: order-to-delivery days for completed deliveries.
+
+    Include delivered orders subsequently refunded; exclude missing, invalid,
+    or reversed dates. Never return individual orders or customer identities.
+    """
+    row = conn.execute(
+        """SELECT AVG(julianday(delivered_at) - julianday(ordered_at)) AS average_days,
+                  COUNT(*) AS sample_count
+           FROM orders
+           WHERE product_id = ? AND status IN ('delivered', 'refunded')
+             AND julianday(delivered_at) >= julianday(ordered_at)""",
+        (product_id,),
+    ).fetchone()
+    return {"average_days": row["average_days"], "sample_count": row["sample_count"]}
+
+
 def set_order_status(conn: sqlite3.Connection, order_id: int, status: str) -> None:
     conn.execute("UPDATE orders SET status = ? WHERE id = ?", (status, order_id))
     conn.commit()
